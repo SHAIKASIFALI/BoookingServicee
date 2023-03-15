@@ -1,12 +1,14 @@
 const { BookingRepository } = require("../repository/index");
+const channel = require("../index");
 const ServiceError = require("../utils/errors/service-error");
 const axios = require("axios");
-const { FLIGHT_SERVICE_URL } = require("../config/serverConfig");
+const { FLIGHT_SERVICE_URL, BINDING_KEY } = require("../config/serverConfig");
+const { publishMessage } = require("../utils/messageQueue");
+const { json } = require("body-parser");
 class BookingService {
   constructor() {
     this.bookingRepository = new BookingRepository();
   }
-
   async createBooking(data) {
     try {
       const flightServiceGetUrl = `${FLIGHT_SERVICE_URL}/${data.flightId}`;
@@ -38,6 +40,13 @@ class BookingService {
       const bookingUpdt = await this.bookingRepository.update(booking.id, {
         status: "Booked",
       });
+      publishMessage(
+        channel,
+        BINDING_KEY,
+        JSON.stringify({
+          message: `heyaa I published an event`,
+        })
+      );
       return bookingUpdt;
     } catch (error) {
       console.log(error);
